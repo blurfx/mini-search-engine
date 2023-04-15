@@ -21,7 +21,7 @@ type SearchEngine struct {
 	index        InvertedIndex
 	documents    []Document
 	avgDocLength float64
-	k1, k2       float64
+	k1, b        float64
 }
 
 func BuildInvertedIndex(documents []Document) InvertedIndex {
@@ -66,8 +66,8 @@ func (se *SearchEngine) CalculateBM25Score(tokens []string) map[int]float64 {
 			for _, docID := range docSet {
 				tf := float64(strings.Count(strings.ToLower(se.documents[docID].Content), token))
 				dl := float64(len(strings.Fields(strings.ToLower(se.documents[docID].Content))))
-				numerator := (se.k1 + 1) * tf * (se.k1 + 1) / (tf + se.k1*(1.0-se.k2+se.k2*dl/se.avgDocLength))
-				denominator := tf + se.k1*(1.0-se.k2+se.k2*dl/se.avgDocLength)
+				numerator := (se.k1 + 1) * tf * (se.k1 + 1) / (tf + se.k1*(1.0-se.b+se.b*dl/se.avgDocLength))
+				denominator := tf + se.k1*(1.0-se.b+se.b*dl/se.avgDocLength)
 				scores[docID] += idf * numerator / denominator
 			}
 		}
@@ -135,7 +135,7 @@ func main() {
 	for _, doc := range documents {
 		docLength += float64(len(doc.Content))
 	}
-	searchEngine := SearchEngine{index: index, documents: documents, avgDocLength: docLength / float64(len(documents)), k1: 1.2, k2: 0.75}
+	searchEngine := SearchEngine{index: index, documents: documents, avgDocLength: docLength / float64(len(documents)), k1: 1.2, b: 0.75}
 
 	for {
 		fmt.Print("Enter a search query: ")
